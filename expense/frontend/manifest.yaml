@@ -1,0 +1,133 @@
+kind: ConfigMap
+apiVersion: v1
+metadata: 
+  name: frontend
+  namespace: expense
+data:
+  nginx.config:
+    user nginx;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log;
+    pid /run/nginx.pid;
+
+    # Load dynamic modules. See /usr/share/doc/nginx/README.dynamic.
+    include /usr/share/nginx/modules/*.conf;
+
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+        log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                          '$status $body_bytes_sent "$http_referer" '
+                          '"$http_user_agent" "$http_x_forwarded_for"';
+
+        access_log  /var/log/nginx/access.log  main;
+
+        sendfile            on;
+        tcp_nopush          on;
+        tcp_nodelay         on;
+        keepalive_timeout   65;
+        types_hash_max_size 2048;
+
+        include             /etc/nginx/mime.types;
+        default_type        application/octet-stream;
+
+        # Load modular configuration files from the /etc/nginx/conf.d directory.
+        # See http://nginx.org/en/docs/ngx_core_module.html#include
+        # for more information.
+        include /etc/nginx/conf.d/*.conf;
+
+        server {
+            listen       8080 default_server;
+            listen       [::]:8080 default_server;
+            server_name  _;
+            root         /usr/share/nginx/html;
+
+            # Load configuration files for the default server block.
+            include /etc/nginx/default.d/*.conf;          
+          
+            error_page 404 /404.html;
+                location = /40x.html {
+            }
+
+            location /api/ {
+              proxy_pass http://backend:8080/;
+            }
+
+            error_page 500 502 503 504 /50x.html;
+                location = /50x.html {
+            }
+        }
+
+    }
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: frontend
+  namespace: expense
+  # this labels are replicaset labels
+  labels: 
+    app: frontend
+    tier: expense
+    purpose: deployment
+spec:
+  # modify replicas according to your case
+  replicas: 1
+  selector:
+    # replicaset use these labels to find the pods for creating desired number of replicas
+    matchLabels:
+      app: frontend
+      tier: expense
+      purpose: deployment
+  # pod template
+  template:
+    metadata:
+      labels:
+        app: frontend
+        tier: expense
+        purpose: deployment
+    spec:
+      containers:
+      - name: nginx
+        image: niranjan2505/frontend:1.0.0
+        ports:
+        - containerPort: 8080
+      volumes:
+      - name: nginx
+        configMap:
+          name: frontend
+          items:
+            - key: nginx.conf
+              path: nginx.conf
+        resources:
+          requests:
+            memory: "70Mi"
+            cpu: "100m"
+          limits:
+            memory: "120Mi"
+            cpu: "140m"
+        ports:
+          containerPort: 8080
+        volumeMounts:
+        - name: nginx
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+          readOnly: true
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: frontend
+  namespace: expense
+spec: 
+  type: LoadBalancer
+  selector: # labels are used as selectors
+    app: frontend
+    tier: expense
+    purpose: deployment
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
