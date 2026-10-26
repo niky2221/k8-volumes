@@ -59,7 +59,7 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
       - name: mysql
-        image: niranjan2505/mysql:1.0.0
+        image: niranjan2505/mysql1.0.0:latest
         volumeMounts:
         - name: mysql
           mountPath: /var/lib/mysql
