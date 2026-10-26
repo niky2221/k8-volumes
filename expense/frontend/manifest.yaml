@@ -108,8 +108,6 @@ spec:
           limits:
             memory: "120Mi"
             cpu: "140m"
-        ports:
-          containerPort: 8080
         volumeMounts:
         - name: nginx
           mountPath: /etc/nginx/nginx.conf
