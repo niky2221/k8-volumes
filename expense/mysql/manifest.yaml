@@ -60,9 +60,9 @@ spec:
       containers:
       - name: mysql
         image: niranjan2505/mysql:1.0.0
-      volumeMounts:
-      - name: mysql
-        mountPath: /var/lib/mysql
+        volumeMounts:
+        - name: mysql
+          mountPath: /var/lib/mysql
   volumeClaimTemplates:
   - metadata:
       name: mysql
