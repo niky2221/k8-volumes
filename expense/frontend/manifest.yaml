@@ -94,13 +94,6 @@ spec:
         image: niranjan2505/frontend:1.0.0
         ports:
         - containerPort: 8080
-      volumes:
-      - name: nginx
-        configMap:
-          name: frontend
-          items:
-            - key: nginx.conf
-              path: nginx.conf
         resources:
           requests:
             memory: "70Mi"
@@ -113,6 +106,13 @@ spec:
           mountPath: /etc/nginx/nginx.conf
           subPath: nginx.conf
           readOnly: true
+      volumes:
+        - name: nginx
+          configMap:
+            name: frontend
+            items:
+              - key: nginx.conf
+                path: nginx.conf
 ---
 kind: Service
 apiVersion: v1
